@@ -11,10 +11,8 @@ impl Bus {
     {
         Self { channel }
     }
-}
 
-impl Channel for Bus {
-    fn send(&mut self, json_payload: String) -> Result<(), crate::common::Error> {
+    fn send(&mut self, topic: String, json_payload: String) -> Result<(), crate::common::Error> {
         self.channel.send(json_payload)
     }
 
