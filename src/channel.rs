@@ -4,9 +4,10 @@ use crate::common::Error;
 
 pub trait Channel {
     fn send(&mut self, json_payload: String) -> Result<(), Error>;
-    fn recv() -> Result<Option<String>, Error>;
+    fn recv(&mut self) -> Result<Option<String>, Error>;
 }
 
+#[derive(Default)]
 pub struct LocalStorageChannel {
     messages: VecDeque<String>,
 }
@@ -17,5 +18,7 @@ impl Channel for LocalStorageChannel {
         Ok(())
     }
 
-    fn recv() -> Result<Option<String>, Error> {}
+    fn recv(&mut self) -> Result<Option<String>, Error> {
+        Ok(self.messages.pop_front())
+    }
 }
