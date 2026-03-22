@@ -1,20 +1,19 @@
 use serde::{Deserialize, Serialize};
-use uuid::{Timestamp, Uuid};
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Message {
-    id: Uuid,
-    name: String,
-    payload: Vec<u8>,
+    pub id: Uuid,
+    pub name: String,
+    pub json_payload: String,
 }
 
 impl Message {
-    pub fn new(name: String, payload: Vec<u8>) -> Self {
+    pub fn new(name: String, json_payload: String) -> Self {
         Self {
-            // TODO: Context likely needs to be persisted statically (for sub nanosec sequence gen).
-            id: Uuid::new_v7(Timestamp::now(uuid::ContextV7::new())),
+            id: Uuid::new_v4(),
             name,
-            payload,
+            json_payload,
         }
     }
 }

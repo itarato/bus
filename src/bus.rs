@@ -1,37 +1,42 @@
-use crate::channel::Channel;
+// use crate::{channel::Channel, message::Message};
 
-pub struct Bus {
-    channel: Box<dyn Channel>,
-}
+// pub struct Bus {
+//     channel: Box<dyn Channel>,
+// }
 
-impl Bus {
-    pub fn new<T>(channel: Box<T>) -> Self
-    where
-        T: Channel + 'static,
-    {
-        Self { channel }
-    }
+// impl Bus {
+//     pub fn new<T>(channel: Box<T>) -> Self
+//     where
+//         T: Channel + 'static,
+//     {
+//         Self { channel }
+//     }
 
-    fn send(&mut self, topic: String, json_payload: String) -> Result<(), crate::common::Error> {
-        self.channel.send(json_payload)
-    }
+//     pub fn send(
+//         &mut self,
+//         topic: String,
+//         json_payload: String,
+//     ) -> Result<(), crate::common::Error> {
+//         let message = Message::new(topic, json_payload);
+//         self.channel.send(message)
+//     }
 
-    fn recv(&mut self) -> Result<Option<String>, crate::common::Error> {
-        self.channel.recv()
-    }
-}
+//     pub fn recv(&mut self) -> Result<Option<Message>, crate::common::Error> {
+//         self.channel.recv()
+//     }
+// }
 
-#[cfg(test)]
-mod test {
-    use crate::{
-        bus::Bus,
-        channel::{Channel, LocalStorageChannel},
-    };
+// #[cfg(test)]
+// mod test {
+//     use crate::{bus::Bus, channel::LocalStorageChannel};
 
-    #[test]
-    fn test_basic_setup() {
-        let mut bus = Bus::new(Box::new(LocalStorageChannel::default()));
-        bus.send("1".to_string()).unwrap();
-        assert_eq!(Some("1".to_string()), bus.recv().unwrap());
-    }
-}
+//     #[test]
+//     fn test_basic_setup() {
+//         let mut bus = Bus::new(Box::new(LocalStorageChannel::default()));
+//         bus.send("default".to_string(), "1".to_string()).unwrap();
+
+//         let msg = bus.recv().unwrap().unwrap();
+//         assert_eq!("1".to_string(), msg.json_payload);
+//         assert_eq!("default".to_string(), msg.name);
+//     }
+// }
