@@ -1,5 +1,6 @@
 pub mod local_storage;
 pub mod proxy;
+pub mod spy;
 pub mod topic;
 
 use crate::{common::Error, message::Message};
