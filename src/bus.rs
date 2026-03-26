@@ -79,10 +79,15 @@ pub struct Bus {
 
 impl Bus {
     pub fn new() -> Self {
-        let thread_handle = spawn(move || Self::work_thread());
+        let incoming = Arc::new(Queue::new());
+
+        let thread_handle = spawn({
+            let incoming = incoming.clone();
+            move || Self::work_thread()
+        });
 
         Self {
-            incoming: Arc::new(Queue::new()),
+            incoming,
             outgoing: HashMap::new(),
             thread_handle,
         }
@@ -100,7 +105,11 @@ impl Bus {
         OutQueue { inner: queue }
     }
 
-    fn work_thread() {}
+    fn work_thread() {
+        // let (in_queue, in_cv) = &*self
+
+        loop {}
+    }
 }
 
 #[cfg(test)]
