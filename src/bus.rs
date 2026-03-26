@@ -4,7 +4,7 @@ use std::{
     thread::{JoinHandle, spawn},
 };
 
-use crate::message::Message;
+use crate::message::{self, Message};
 
 pub struct Queue {
     queue_and_condvar: Arc<(Mutex<VecDeque<Message>>, Condvar)>,
@@ -73,22 +73,25 @@ impl OutQueue {
 
 pub struct Bus {
     incoming: Arc<Queue>,
-    outgoing: HashMap<String, Arc<Queue>>,
+    outgoing: Arc<Mutex<HashMap<String, Arc<Queue>>>>,
     thread_handle: JoinHandle<()>,
 }
 
 impl Bus {
     pub fn new() -> Self {
         let incoming = Arc::new(Queue::new());
+        let outgoing = Arc::new(Mutex::new(HashMap::new()));
 
         let thread_handle = spawn({
             let incoming = incoming.clone();
-            move || Self::work_thread()
+            let outgoing = outgoing.clone();
+
+            move || Self::work_thread(incoming, outgoing)
         });
 
         Self {
             incoming,
-            outgoing: HashMap::new(),
+            outgoing,
             thread_handle,
         }
     }
@@ -101,14 +104,19 @@ impl Bus {
 
     pub fn get_listener(&mut self, name: String) -> OutQueue {
         let queue = Arc::new(Queue::new());
-        self.outgoing.insert(name, queue.clone());
+        let mut outgoing = self.outgoing.lock().unwrap();
+        outgoing.insert(name, queue.clone());
         OutQueue { inner: queue }
     }
 
-    fn work_thread() {
-        // let (in_queue, in_cv) = &*self
-
-        loop {}
+    fn work_thread(incoming: Arc<Queue>, outgoing: Arc<Mutex<HashMap<String, Arc<Queue>>>>) {
+        loop {
+            let message = incoming.get_blocking();
+            let outgoing_guard = outgoing.lock().unwrap();
+            for (_, out_queue) in &*outgoing_guard {
+                out_queue.put(message.clone());
+            }
+        }
     }
 }
 
