@@ -4,7 +4,7 @@ use std::{
     thread::{JoinHandle, spawn},
 };
 
-use crate::message::{self, Message};
+use crate::message::Message;
 
 pub struct Queue {
     queue_and_condvar: Arc<(Mutex<VecDeque<Message>>, Condvar)>,
