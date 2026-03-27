@@ -137,6 +137,17 @@ mod test {
         pub_a.put(make_message());
         pub_b.put(make_message());
         pub_a.put(make_message());
+
+        assert_eq!(listener_a.get_blocking().name, String::from("name"));
+        assert_eq!(listener_a.get_blocking().name, String::from("name"));
+        assert_eq!(listener_a.get_blocking().name, String::from("name"));
+
+        assert_eq!(listener_b.get_blocking().name, String::from("name"));
+        assert_eq!(listener_b.get_blocking().name, String::from("name"));
+        assert_eq!(listener_b.get_blocking().name, String::from("name"));
+
+        assert_eq!(listener_a.get(), None);
+        assert_eq!(listener_b.get(), None);
     }
 
     fn make_message() -> Message {
