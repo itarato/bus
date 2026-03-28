@@ -42,7 +42,7 @@ impl Queue {
         }
     }
 
-    pub fn get_blocking_timeout(&self, mut duration: Duration) -> Option<Message> {
+    pub fn get_timeout(&self, mut duration: Duration) -> Option<Message> {
         let mut queue = self.queue.lock().unwrap();
         let deadline = SystemTime::now().checked_add(duration).unwrap();
 
@@ -94,5 +94,9 @@ impl OutQueue {
 
     pub fn get_blocking(&self) -> Message {
         self.inner.get_blocking()
+    }
+
+    pub fn get_timeout(&self, duration: Duration) -> Option<Message> {
+        self.inner.get_timeout(duration)
     }
 }

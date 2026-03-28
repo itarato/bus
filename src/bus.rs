@@ -62,7 +62,7 @@ mod test {
     use crate::{bus::Bus, message::Message, preprocessor::ProcessorPipeline};
 
     #[test]
-    fn test_non_blocking() {
+    fn test_address_all() {
         let mut bus = Bus::new(ProcessorPipeline::new());
 
         let pub_a = bus.get_publisher();
@@ -92,7 +92,16 @@ mod test {
     fn make_message() -> Message {
         Message::new(
             String::from("x"),
-            Some(vec![String::from("y")]),
+            None,
+            String::from("name"),
+            String::from("1"),
+        )
+    }
+
+    fn make_message_to(to: Vec<String>) -> Message {
+        Message::new(
+            String::from("x"),
+            Some(to),
             String::from("name"),
             String::from("1"),
         )

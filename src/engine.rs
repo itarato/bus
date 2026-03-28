@@ -33,14 +33,23 @@ impl Engine {
 
     pub(crate) fn run(mut self) {
         loop {
-            if let Some(message) = self
-                .incoming
-                .get_blocking_timeout(Duration::from_millis(10))
-            {
+            if let Some(message) = self.incoming.get_timeout(Duration::from_millis(10)) {
                 for message in self.preprocessors.process(message) {
                     let outgoing_guard = self.outgoing.lock().unwrap();
-                    for (_, out_queue) in &*outgoing_guard {
-                        out_queue.put(message.clone());
+
+                    match &message.to {
+                        Some(list) => {
+                            for target in list {
+                                outgoing_guard
+                                    .get(target)
+                                    .map(|out_queue| out_queue.put(message.clone()));
+                            }
+                        }
+                        None => {
+                            for (_, out_queue) in &*outgoing_guard {
+                                out_queue.put(message.clone());
+                            }
+                        }
                     }
                 }
             }
