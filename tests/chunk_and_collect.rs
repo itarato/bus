@@ -17,7 +17,7 @@ impl Processor for Partitioner {
                     message.from.clone(),
                     Some(vec![String::from("fraud")]),
                     String::from("name"),
-                    String::from("1"),
+                    vec![String::from("1")],
                 )
                 .with_chunk(bus::message::Chunk::Partial {
                     total: 2,
@@ -28,7 +28,7 @@ impl Processor for Partitioner {
                     message.from.clone(),
                     Some(vec![String::from("inventory")]),
                     String::from("name"),
-                    String::from("1"),
+                    vec![String::from("1")],
                 )
                 .with_chunk(bus::message::Chunk::Partial {
                     total: 2,
@@ -56,20 +56,22 @@ impl Fraud {
     }
 
     fn run(self) {
-        assert_eq!(
-            self.listener
-                .get_timeout(Duration::from_millis(10))
-                .unwrap()
-                .from,
-            String::from("order")
-        );
+        let msg = self
+            .listener
+            .get_timeout(Duration::from_millis(10))
+            .unwrap();
 
-        self.publisher.put(Message::new(
-            String::from("fraud"),
-            Some(vec![String::from("logging")]),
-            "order".to_string(),
-            "1".to_string(),
-        ));
+        assert_eq!(msg.from, String::from("order"));
+
+        self.publisher.put(
+            Message::new(
+                String::from("fraud"),
+                Some(vec![String::from("logging")]),
+                "order_result".to_string(),
+                vec!["1".to_string()],
+            )
+            .with_chunk(msg.chunk),
+        );
     }
 }
 
@@ -87,20 +89,22 @@ impl Inventory {
     }
 
     fn run(self) {
-        assert_eq!(
-            self.listener
-                .get_timeout(Duration::from_millis(10))
-                .unwrap()
-                .from,
-            String::from("order")
-        );
+        let msg = self
+            .listener
+            .get_timeout(Duration::from_millis(10))
+            .unwrap();
 
-        self.publisher.put(Message::new(
-            String::from("inventory"),
-            Some(vec![String::from("logging")]),
-            "order".to_string(),
-            "1".to_string(),
-        ));
+        assert_eq!(msg.from, String::from("order"));
+
+        self.publisher.put(
+            Message::new(
+                String::from("inventory"),
+                Some(vec![String::from("logging")]),
+                "order_result".to_string(),
+                vec!["1".to_string()],
+            )
+            .with_chunk(msg.chunk),
+        );
     }
 }
 
@@ -119,7 +123,7 @@ fn test_chunk_and_collect() {
     let inventory_th = spawn({
         let listener = bus.get_listener(String::from("inventory"));
         let publisher = bus.get_publisher();
-        move || Fraud::new(listener, publisher).run()
+        move || Inventory::new(listener, publisher).run()
     });
 
     let logging_recv = bus.get_listener(String::from("logging"));
@@ -127,7 +131,11 @@ fn test_chunk_and_collect() {
 
     order_send.put(make_message());
 
-    assert_eq!(logging_recv.get_timeout(Duration::from_millis(10)), None);
+    assert!(
+        logging_recv
+            .get_timeout(Duration::from_millis(10))
+            .is_some()
+    );
 
     fraud_th.join().unwrap();
     inventory_th.join().unwrap();
@@ -140,6 +148,6 @@ fn make_message() -> Message {
         String::from("order"),
         None,
         String::from("name"),
-        String::from("1"),
+        vec![String::from("1")],
     )
 }

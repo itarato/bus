@@ -7,7 +7,7 @@ use std::{
 use uuid::Uuid;
 
 use crate::{
-    message::Message,
+    message::{Chunk, Message},
     preprocessor::{Processor, ProcessorPipeline},
     queue::Queue,
 };
@@ -17,6 +17,7 @@ pub(crate) struct Engine {
     outgoing: Arc<Mutex<HashMap<String, Arc<Queue>>>>,
     preprocessors: ProcessorPipeline,
     is_terminated: Arc<AtomicBool>,
+    chunks: HashMap<Uuid, Message>,
 }
 
 impl Engine {
@@ -25,13 +26,13 @@ impl Engine {
         outgoing: Arc<Mutex<HashMap<String, Arc<Queue>>>>,
         preprocessors: ProcessorPipeline,
         is_terminated: Arc<AtomicBool>,
-        chunks: HashMap<Uuid, Message>,
     ) -> Self {
         Self {
             incoming,
             outgoing,
             preprocessors,
             is_terminated,
+            chunks: HashMap::new(),
         }
     }
 
@@ -78,10 +79,26 @@ impl Engine {
     }
 
     fn manage_chunk(&mut self, message: Message) -> Option<Message> {
-        if message.chunk.is_complete() {
-            return Some(message);
-        }
+        match &message.chunk {
+            Chunk::Full => Some(message),
+            Chunk::Partial { total, has, id } => {
+                assert!(total >= has);
+                if total == has {
+                    Some(message)
+                } else {
+                    let filled_msg = match self.chunks.remove(id) {
+                        Some(existing_message) => existing_message.merge_chunk(&message),
+                        None => message.clone(),
+                    };
 
-        unimplemented!()
+                    if filled_msg.chunk.is_complete() {
+                        Some(filled_msg)
+                    } else {
+                        self.chunks.insert(*id, filled_msg);
+                        None
+                    }
+                }
+            }
+        }
     }
 }

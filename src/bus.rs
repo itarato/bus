@@ -59,6 +59,8 @@ impl Bus {
 
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
+
     use crate::{bus::Bus, message::Message, preprocessor::ProcessorPipeline};
 
     #[test]
@@ -89,12 +91,31 @@ mod test {
         bus.terminate();
     }
 
+    #[test]
+    fn test_address_one() {
+        let mut bus = Bus::new(ProcessorPipeline::new());
+
+        let publisher = bus.get_publisher();
+
+        let listener_a = bus.get_listener(String::from("a"));
+        let listener_b = bus.get_listener(String::from("b"));
+        let listener_c = bus.get_listener(String::from("c"));
+
+        publisher.put(make_message_to(vec!["b".to_string()]));
+
+        assert!(listener_a.get_timeout(Duration::from_millis(10)).is_none());
+        assert!(listener_b.get_timeout(Duration::from_millis(10)).is_some());
+        assert!(listener_c.get_timeout(Duration::from_millis(10)).is_none());
+
+        bus.terminate();
+    }
+
     fn make_message() -> Message {
         Message::new(
             String::from("x"),
             None,
             String::from("name"),
-            String::from("1"),
+            vec![String::from("1")],
         )
     }
 
@@ -103,7 +124,7 @@ mod test {
             String::from("x"),
             Some(to),
             String::from("name"),
-            String::from("1"),
+            vec![String::from("1")],
         )
     }
 }
