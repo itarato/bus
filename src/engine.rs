@@ -10,9 +10,11 @@ use crate::{
     message::{Chunk, Message},
     preprocessor::{Processor, ProcessorPipeline},
     queue::Queue,
+    service_layout::ServiceLayout,
 };
 
 pub(crate) struct Engine {
+    service_layout: ServiceLayout,
     incoming: Arc<Queue>,
     outgoing: Arc<Mutex<HashMap<String, Arc<Queue>>>>,
     preprocessors: ProcessorPipeline,
@@ -22,12 +24,14 @@ pub(crate) struct Engine {
 
 impl Engine {
     pub(crate) fn new(
+        service_layout: ServiceLayout,
         incoming: Arc<Queue>,
         outgoing: Arc<Mutex<HashMap<String, Arc<Queue>>>>,
         preprocessors: ProcessorPipeline,
         is_terminated: Arc<AtomicBool>,
     ) -> Self {
         Self {
+            service_layout,
             incoming,
             outgoing,
             preprocessors,

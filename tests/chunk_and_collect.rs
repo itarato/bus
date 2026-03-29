@@ -5,6 +5,7 @@ use bus::{
     message::Message,
     preprocessor::{Processor, ProcessorPipeline},
     queue::{InQueue, OutQueue},
+    service_layout::ServiceLayout,
 };
 
 struct Partitioner;
@@ -113,7 +114,7 @@ fn test_chunk_and_collect() {
     let mut pipeline = ProcessorPipeline::new();
     pipeline.add_processor(Partitioner);
 
-    let mut bus = Bus::new(pipeline);
+    let mut bus = Bus::new(pipeline, ServiceLayout::default());
 
     let fraud_th = spawn({
         let listener = bus.get_listener(String::from("fraud"));

@@ -8,6 +8,7 @@ use crate::{
     engine::Engine,
     preprocessor::ProcessorPipeline,
     queue::{InQueue, OutQueue, Queue},
+    service_layout::ServiceLayout,
 };
 
 pub struct Bus {
@@ -18,7 +19,7 @@ pub struct Bus {
 }
 
 impl Bus {
-    pub fn new(preprocessors: ProcessorPipeline) -> Self {
+    pub fn new(preprocessors: ProcessorPipeline, service_layout: ServiceLayout) -> Self {
         let incoming = Arc::new(Queue::new());
         let outgoing = Arc::new(Mutex::new(HashMap::new()));
         let is_terminated = Arc::new(AtomicBool::new(false));
@@ -28,7 +29,16 @@ impl Bus {
             let outgoing = outgoing.clone();
             let is_terminated = is_terminated.clone();
 
-            move || Engine::new(incoming, outgoing, preprocessors, is_terminated).run()
+            move || {
+                Engine::new(
+                    service_layout,
+                    incoming,
+                    outgoing,
+                    preprocessors,
+                    is_terminated,
+                )
+                .run()
+            }
         });
 
         Self {
@@ -61,11 +71,13 @@ impl Bus {
 mod test {
     use std::time::Duration;
 
-    use crate::{bus::Bus, message::Message, preprocessor::ProcessorPipeline};
+    use crate::{
+        bus::Bus, message::Message, preprocessor::ProcessorPipeline, service_layout::ServiceLayout,
+    };
 
     #[test]
     fn test_address_all() {
-        let mut bus = Bus::new(ProcessorPipeline::new());
+        let mut bus = Bus::new(ProcessorPipeline::new(), ServiceLayout::default());
 
         let pub_a = bus.get_publisher();
         let pub_b = bus.get_publisher();
@@ -93,7 +105,7 @@ mod test {
 
     #[test]
     fn test_address_one() {
-        let mut bus = Bus::new(ProcessorPipeline::new());
+        let mut bus = Bus::new(ProcessorPipeline::new(), ServiceLayout::default());
 
         let publisher = bus.get_publisher();
 

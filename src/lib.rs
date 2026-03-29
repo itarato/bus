@@ -3,3 +3,4 @@ pub mod engine;
 pub mod message;
 pub mod preprocessor;
 pub mod queue;
+pub mod service_layout;
